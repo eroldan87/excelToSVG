@@ -24,7 +24,7 @@ themes = [
 // fs.writeFileSync('data.html', html)
 
 const workbook = new ExcelJS.Workbook()
-workbook.xlsx.readFile('./assets/aa.xlsx').then(res => {
+workbook.xlsx.readFile('./assets/Libro2.xlsx').then(res => {
     // res.eachSheet(function(worksheet, sheetId) {
     //     console.log(sheetId)
     //   });
@@ -32,7 +32,7 @@ workbook.xlsx.readFile('./assets/aa.xlsx').then(res => {
 
     // console.log(res.getWorksheet(51))
 
-    let sheet1 = res.getWorksheet(51)
+    let sheet1 = res.getWorksheet(1)
     delete sheet1._workbook
 
     const heights = sheet1._rows.map(x => {
@@ -47,8 +47,8 @@ workbook.xlsx.readFile('./assets/aa.xlsx').then(res => {
         svg: {
             _attributes: {
                 version: 1.1,
-                width: 10000,
-                height: 10000,
+                width: 20000,
+                height: 20000,
                 xmlns: "http://www.w3.org/2000/svg"
             },
             defs: {
@@ -108,7 +108,7 @@ workbook.xlsx.readFile('./assets/aa.xlsx').then(res => {
     });
 
     // console.log(rows.find(x => x.value.model.style == rows.find(x => x.address == 'P25').value.model.style))
-    console.log(rows.find(x => x.address == 'BX28').value.model.style)
+    // console.log(rows.find(x => x.address == 'BX28').value.model.style)
 
     rows.forEach(cell => {
         if (cell.checked) return
@@ -125,7 +125,8 @@ workbook.xlsx.readFile('./assets/aa.xlsx').then(res => {
                 if (i == -1) {
                     image.svg.defs.linearGradient.push({
                         _attributes: {
-                            id: 'linearGradient' + cell.address
+                            id: 'linearGradient' + cell.address,
+                            ...getCoords(cell.value.model.style.fill.degree)
                         },
                         reference: cell.value.model.style.fill,
                         stop: cell.value.model.style.fill.stops.map(stop => {
@@ -142,10 +143,10 @@ workbook.xlsx.readFile('./assets/aa.xlsx').then(res => {
                     color = `url(#${image.svg.defs.linearGradient[i]._attributes.id})`
                 }
             } else {
-                color = 'white'
+                color = 'black'
             }
         } else {
-            color = 'white'
+            return
         }
 
         image.svg.rect.push(
@@ -182,7 +183,7 @@ function getColor(color) {
         return hslToHex(theme)
 
     } else if (color.indexed != null) {
-        return 'white'
+        return 'black'
     } 
 }
 
@@ -222,6 +223,30 @@ function hslToHex(hsl) {
 function CalculateFinalLumValue(tint, lum) {
 
     if (tint == null) return lum;
+    if (lum == 0) return lum + tint * 100
     return lum * (1.0 + tint);
 
 } 
+
+function getCoords(angle) {
+    if (angle == null) angle = 0
+    angle = angle * 2 * Math.PI / 360.0
+    const coords = {x1: 0.5, y1: 0.5, x2:0, y2:0}
+    const cuarto = Math.PI / 4.
+    if (angle >= cuarto && angle < 3 * cuarto) {
+        coords.y2 = 1
+        coords.x2 = (coords.y2 - coords.y1) / Math.tan(angle) + coords.x1
+    } else if (angle >= 3 * cuarto && angle < 5 * cuarto) {
+        coords.x2 = 0
+        coords.y2 = (coords.x2 - coords.x1) / Math.tan(angle) + coords.y1
+    } else if (angle >= 5 * cuarto && angle < 7 * cuarto) {
+        coords.y2 = 0
+        coords.x2 = (coords.y2 - coords.y1) / Math.tan(angle) + coords.x1
+    } else {
+        coords.x2 = 1
+        coords.y2 = (coords.x2 - coords.x1) / Math.tan(angle) + coords.y1
+    }
+    coords.y1 = 1-coords.y2
+    coords.x1 = 1-coords.x2
+    return coords
+}
